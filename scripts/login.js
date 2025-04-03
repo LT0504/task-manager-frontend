@@ -1,4 +1,4 @@
-const URL = 'https://task-manager-api-5r0g.onrender.com';
+const URL = 'https://api-rest-taskmanager.onrender.com';
 
 document.getElementById('loginForm').addEventListener('submit', function (e) {
     e.preventDefault();
