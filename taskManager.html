@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestor de Tareas - Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Iconos de Bootstrap (opcional) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="styles/taskManager.css">
+  <script src="/scripts/userManager.js"></script>
+  <script src="/scripts/auth.js"></script>
+
+</head>
+
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="navbar-brand">Gestor de Tareas</div>
+    <!-- Botón de menú para pantallas pequeñas -->
+    <button class="btn btn-light d-md-none" data-bs-toggle="offcanvas" data-bs-target="#offcanvasMenu"
+      aria-controls="offcanvasMenu">
+      <i class="bi bi-list"></i> Menu
+    </button>
+    <!-- Botón para Nueva Tarea en pantallas grandes -->
+    <button class="btn btn-light d-none d-md-block" data-bs-toggle="modal" data-bs-target="#newTaskModal"
+      onclick="resetModal()">Nueva Tarea</button>
+  </div>
+
+  <!-- Offcanvas para menú en pantallas pequeñas -->
+  <div class="offcanvas offcanvas-start d-md-none" tabindex="-1" id="offcanvasMenu"
+    aria-labelledby="offcanvasMenuLabel">
+    <div class="offcanvas-header">
+      <h5 id="offcanvasMenuLabel">Menú</h5>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+    </div>
+    <div class="offcanvas-body">
+      <a href="#" data-section="allTasks" onclick="loadTasks()">🏠 Inicio</a>
+      <a href="#" data-section="pendingTasks" onclick="getTaskByStatus('pending')">📋 Tareas Pendientes</a>
+      <a href="#" data-section="inProgress" onclick="getTaskByStatus('in-progress')">📋 Tareas En Curso</a>
+      <a href="#" data-section="completed" onclick="getTaskByStatus('completed')">📋 Tareas Completadas</a>
+      <a href="#" data-section="userConfig" onclick="loadUser()">⚙ Configuración</a>
+      <button class="btn btn-danger mt-4 w-100" onclick="logout()">
+        Cerrar Sesión
+      </button>
+    </div>
+  </div>
+
+  <!-- Sidebar para pantallas grandes -->
+  <div class="sidebar d-none d-md-block">
+    <a href="#" data-section="allTasks" onclick="loadTasks()">🏠 Inicio</a>
+    <a href="#" data-section="pendingTasks" onclick="getTaskByStatus('pending')">⏳ Tareas Pendientes</a>
+    <a href="#" data-section="inProgress" onclick="getTaskByStatus('in-progress')">🚧 Tareas En Curso</a>
+    <a href="#" data-section="completed" onclick="getTaskByStatus('completed')">✅ Tareas Completadas</a>
+    <a href="#" data-section="userConfig" onclick="loadUser()">⚙ Configuración</a>
+    <button class="btn btn-danger mt-4 w-100" onclick="logout()">
+      Cerrar Sesión
+    </button>
+  </div>
+
+  <!-- Contenido Principal -->
+  <section id="allTasks" class="section active">
+    <div class="content">
+      <h2>Mis Tareas</h2>
+      <hr>
+      <div class="task-container">
+      </div>
+    </div>
+  </section>
+
+  <section id="pendingTasks" class="section">
+    <div class="content">
+      <h2>Mis Tareas</h2>
+      <hr>
+      <div class="task-container">
+      </div>
+  </section>
+
+  <section id="inProgress" class="section">
+    <div class="content">
+      <h2>Mis Tareas</h2>
+      <hr>
+      <div class="task-container">
+      </div>
+  </section>
+
+  <section id="completed" class="section">
+    <div class="content">
+      <h2>Mis Tareas</h2>
+      <hr>
+      <div class="tabindex">
+      </div>
+  </section>
+
+  <section id="userConfig" class="section">
+    <div class="content">
+      <h2 class="mb-3">Configuración de Usuario</h2>
+      <hr>
+      <div class="row">
+        <div class="col-lg-5 mb-3">
+          <div class="card task-card p-4 shadow-lg border-0">
+            <div id="dataUser" class="card-body">
+            </div>
+          </div>
+        </div>
+      </div>
+  </section>
+
+
+  <!-- Botón flotante para agregar tarea en pantallas pequeñas -->
+  <button class="btn btn-success btn-add d-md-none" data-bs-toggle="modal" data-bs-target="#newTaskModal"
+    onclick="resetModal()">+</button>
+
+  <!--MODAL EDITAR NOMBRE-->
+  <div class="modal fade" id="editNameModal" tabindex="-1" aria-labelledby="editNameModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editTaskModalLabel">CAMBIAR NOMBRE</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editTaskForm">
+            <div class="mb-3">
+              <label for="editNameUser" class="form-label">Nombre</label>
+              <input type="text" class="form-control" id="editNameUser" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="changeUser()">Aceptar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!--MODAL EDITAR EMAIL-->
+  <div class="modal fade" id="editEmailModal" tabindex="-1" aria-labelledby="editEmailModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editEmailModalLabel">CAMBIAR EMAIL</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editTaskForm">
+            <div class="mb-3">
+              <label for="editEmailUser" class="form-label">Email</label>
+              <input type="text" class="form-control" id="editEmailUser" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="changeUser()">Aceptar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--MODAL EDITAR CONTRASEÑA-->
+  <div class="modal fade" id="editPasswordModal" tabindex="-1" aria-labelledby="editPasswordModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editTaskModalLabel">CAMBIAR CONTRASEÑA</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editTaskForm">
+            <div class="mb-3">
+              <label for="editPasswordUser" class="form-label">Contraseña</label>
+              <input type="text" class="form-control" id="editPasswordUser" required>
+            </div>
+            <div class="mb-3">
+              <label for="editPasswordUser1" class="form-label">Repita la contraseña</label>
+              <input type="text" class="form-control" id="editPasswordUser1" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="changeUser()">Aceptar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--MODALES PARA AGREGAR/EDITAR TAREAS-->
+  <!-- Modal para Nueva/Editar Tarea -->
+  <div class="modal fade" id="newTaskModal" tabindex="-1" aria-labelledby="newTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" style="background-color: #1f2833;">
+          <h5 class="modal-title" id="newTaskModalLabel" style="color:#fff;">Nueva Tarea</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <form id="taskForm">
+            <div class="mb-3">
+              <label for="taskTitle" class="form-label">Título</label>
+              <input type="text" class="form-control" id="taskTitle" required>
+            </div>
+            <div class="mb-3">
+              <label for="taskDescription" class="form-label">Descripción</label>
+              <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="taskPriority" class="form-label">Prioridad</label>
+              <select class="form-select" id="taskPriority">
+                <option value="Alta">Alta</option>
+                <option value="Media" selected>Media</option>
+                <option value="Baja">Baja</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="taskStatus" class="form-label">Estado</label>
+              <select class="form-select" id="taskStatus">
+                <option value="Pendiente">Pendiente</option>
+                <option value="En curso">En curso</option>
+                <option value="Completada">Completada</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label for="taskDueDate" class="form-label">Fecha limite</label>
+              <input type="date" id="taskDueDate" class="form-control">
+            </div>
+
+            <button type="button" class="btn btn-primary w-100" onclick="createTask()">Guardar Tarea</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de edición -->
+  <div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editTaskModalLabel">Editar Tarea</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editTaskForm">
+            <input type="hidden" id="editTaskId">
+            <div class="mb-3">
+              <label for="editTaskTitle" class="form-label">Título</label>
+              <input type="text" class="form-control" id="editTaskTitle" required>
+            </div>
+            <div class="mb-3">
+              <label for="editTaskDescription" class="form-label">Descripción</label>
+              <textarea class="form-control" id="editTaskDescription" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="editTaskStatus" class="form-label">Estado</label>
+              <select class="form-select" id="editTaskStatus" required>
+                <option value="Pendiente">Pendiente</option>
+                <option value="En curso">En curso</option>
+                <option value="Completado">Completado</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editTaskPriority" class="form-label">Prioridad</label>
+              <select class="form-select" id="editTaskPriority" required>
+                <option value="Baja">Baja</option>
+                <option value="Media">Media</option>
+                <option value="Alta">Alta</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="updateTask()">Guardar Cambios</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--FIN MODALES PARA AGREGAR/EDITAR TAREAS-->
+
+  <script src="/scripts/taskManager.js"> </script>
+  <script>
+    document.querySelectorAll(".sidebar a, .offcanvas-body a").forEach(link => {
+      link.addEventListener("click", function (event) {
+        event.preventDefault();
+        const sectionId = this.getAttribute("data-section");
+        if (!sectionId) return;
+        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+        document.getElementById(sectionId).classList.add('active');
+        const offcanvasElement = document.getElementById("offcanvasMenu");
+        const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasElement);
+        if (offcanvas) {
+          offcanvas.hide();
+        }
+      });
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>
